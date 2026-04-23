@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Roadmap Card Designer</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f0f0f8;
+  --panel:#ffffff;
+  --border:#e2e2ee;
+  --text:#1a1a2e;
+  --muted:#7878a0;
+  --accent:#6c47ff;
+  --accent2:#00c896;
+  --danger:#ff4466;
+  --font:'Plus Jakarta Sans',sans-serif;
+  --heading-font:'Sora',sans-serif;
+  --radius:16px;
+  --toolbar-h:54px;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);overflow:hidden;}
+
+/* ══ LAYOUT ══ */
+.app{display:grid;grid-template-rows:var(--toolbar-h) 1fr;grid-template-columns:270px 1fr;height:100vh;}
+.toolbar{grid-column:1/-1;grid-row:1;display:flex;align-items:center;gap:6px;padding:0 16px;background:#fff;border-bottom:1px solid var(--border);z-index:200;overflow-x:auto;}
+.sidebar{grid-column:1;grid-row:2;background:#fff;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;}
+.canvas{grid-column:2;grid-row:2;overflow:auto;padding:40px;display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap;}
+
+/* ══ TOOLBAR ══ */
+.tb-sep{width:1px;height:28px;background:var(--border);margin:0 4px;flex-shrink:0;}
+.tb-btn{display:flex;align-items:center;gap:5px;font-size:12px;font-family:var(--font);padding:5px 11px;border:1px solid var(--border);border-radius:8px;background:transparent;cursor:pointer;white-space:nowrap;color:var(--text);transition:all .15s;}
+.tb-btn:hover{background:var(--bg);border-color:#aaa;}
+.tb-btn.danger{color:var(--danger);border-color:#ffcccc;}
+.tb-btn.danger:hover{background:#fff0f3;}
+.tb-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.tb-btn.primary:hover{opacity:.88;}
+.tb-label{font-size:11px;color:var(--muted);white-space:nowrap;}
+.tb-title{font-family:var(--heading-font);font-size:15px;font-weight:700;color:var(--accent);white-space:nowrap;margin-right:4px;}
+
+/* ══ SIDEBAR ══ */
+.sb-section{padding:14px 16px;border-bottom:1px solid var(--border);}
+.sb-title{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.sb-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;}
+.sb-row label{font-size:12px;color:var(--text);flex:1;min-width:70px;}
+.sb-row input[type=color]{width:30px;height:28px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;}
+.sb-row input[type=range]{flex:1;min-width:60px;accent-color:var(--accent);}
+.sb-row input[type=text],.sb-row select{flex:1;font-size:12px;font-family:var(--font);padding:5px 8px;border:1px solid var(--border);border-radius:7px;background:#fff;outline:none;}
+.sb-row input[type=text]:focus,.sb-row select:focus{border-color:var(--accent);}
+.sb-row span.val{font-size:11px;color:var(--muted);min-width:28px;text-align:right;}
+.sb-row .icon-btn{font-size:13px;padding:4px 8px;border:1px solid var(--border);border-radius:6px;cursor:pointer;background:transparent;}
+.sb-row .icon-btn:hover{background:var(--bg);}
+.sb-chip{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid var(--border);cursor:pointer;background:transparent;transition:all .15s;}
+.sb-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.add-btn{width:100%;padding:8px;font-size:12px;font-family:var(--font);border:1.5px dashed var(--border);border-radius:8px;background:transparent;cursor:pointer;color:var(--muted);transition:all .15s;}
+.add-btn:hover{border-color:var(--accent);color:var(--accent);}
+.no-sel{padding:20px 16px;font-size:13px;color:var(--muted);text-align:center;line-height:1.6;}
+
+/* ══ PHASE CARDS ══ */
+.phase-card{background:#fff;border-radius:20px;padding:28px 26px;min-width:320px;max-width:420px;box-shadow:0 2px 16px rgba(0,0,0,.06);position:relative;cursor:default;transition:box-shadow .2s;}
+.phase-card.selected{box-shadow:0 0 0 2.5px var(--accent), 0 4px 24px rgba(108,71,255,.12);}
+.phase-tag{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.05em;padding:4px 12px;border-radius:20px;margin-bottom:14px;}
+.phase-icon{position:absolute;top:22px;right:22px;width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.phase-title{font-family:var(--heading-font);font-size:22px;font-weight:700;margin-bottom:14px;line-height:1.25;}
+.focus-badge{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:18px;}
+.focus-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.feature-block{border-left:3px solid #ccc;padding:10px 0 10px 14px;margin-bottom:14px;cursor:pointer;border-radius:0 8px 8px 0;transition:background .15s;}
+.feature-block:hover{background:#f8f8ff;}
+.feature-block.selected-block{background:#f3f0ff;border-left-color:var(--accent)!important;}
+.feature-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.feature-title .fi{font-size:14px;}
+.feature-item{display:flex;align-items:flex-start;gap:7px;font-size:12.5px;color:#555;margin-bottom:4px;line-height:1.45;}
+.feature-item .fi{font-size:11px;margin-top:2px;flex-shrink:0;}
+
+/* ══ CONNECTOR ══ */
+.connector{display:flex;align-items:center;padding-top:80px;}
+.connector-line{width:40px;height:2px;background:var(--border);}
+.connector-dot{width:14px;height:14px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+
+/* ══ CONTEXT MENU ══ */
+.ctx-menu{display:none;position:fixed;z-index:500;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.14);padding:6px;min-width:170px;}
+.ctx-menu.open{display:block;}
+.ctx-item{font-size:12.5px;padding:7px 12px;border-radius:6px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+.ctx-item:hover{background:var(--bg);}
+.ctx-item.red{color:var(--danger);}
+.ctx-item.red:hover{background:#fff0f3;}
+
+/* ══ MODAL ══ */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400;align-items:center;justify-content:center;}
+.modal-overlay.open{display:flex;}
+.modal{background:#fff;border-radius:18px;padding:24px;width:420px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+.modal h2{font-family:var(--heading-font);font-size:17px;font-weight:700;margin-bottom:18px;}
+.modal label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px;margin-top:10px;}
+.modal input,.modal textarea,.modal select{width:100%;font-size:13px;font-family:var(--font);padding:8px 10px;border:1px solid var(--border);border-radius:8px;outline:none;}
+.modal input:focus,.modal textarea:focus,.modal select:focus{border-color:var(--accent);}
+.modal textarea{height:70px;resize:vertical;}
+.modal-row{display:flex;gap:10px;margin-top:10px;}
+.modal-row>*{flex:1;}
+.modal-btns{display:flex;gap:8px;margin-top:18px;}
+.modal-btns button{flex:1;padding:9px;font-size:13px;font-family:var(--font);border-radius:9px;border:1px solid var(--border);cursor:pointer;background:transparent;}
+.modal-btns button.save{background:var(--accent);color:#fff;border-color:var(--accent);}
+.modal-btns button:hover{opacity:.85;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ TOOLBAR ══ -->
+<div class="toolbar">
+  <span class="tb-title">Roadmap Designer</span>
+  <div class="tb-sep"></div>
+  <button class="tb-btn primary" onclick="addPhase()">+ Add Phase</button>
+  <button class="tb-btn" onclick="openPhaseModal()">✏️ Edit Phase</button>
+  <button class="tb-btn" onclick="addFeatureToSelected()">+ Add Feature</button>
+  <button class="tb-btn danger" onclick="deleteSelected()">🗑 Delete Selected</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="moveSelected(-1)">← Move Left</button>
+  <button class="tb-btn" onclick="moveSelected(1)">→ Move Right</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="exportHTML()">⬇ Export HTML</button>
+  <button class="tb-btn" onclick="exportJSON()">⬇ Export JSON</button>
+  <button class="tb-btn" onclick="importJSON()">⬆ Import JSON</button>
+  <input type="file" id="import-file" accept=".json" style="display:none" onchange="doImport(this)"/>
+</div>
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar" id="sidebar">
+  <div class="no-sel" id="sidebar-empty">
+    <div style="font-size:28px;margin-bottom:8px;">👆</div>
+    Click a <strong>phase card</strong> or a <strong>feature block</strong> to edit its properties here.
+  </div>
+  <div id="sidebar-phase" style="display:none;">
+    <div class="sb-section">
+      <div class="sb-title">Phase Card</div>
+      <div class="sb-row"><label>Tag text</label><input type="text" id="sb-tag" oninput="livePhase('tag',this.value)"/></div>
+      <div class="sb-row"><label>Tag color</label><input type="color" id="sb-tag-color" oninput="livePhase('tagColor',this.value)"/></div>
+      <div class="sb-row"><label>Title</label><input type="text" id="sb-phase-title" oninput="livePhase('title',this.value)"/></div>
+      <div class="sb-row"><label>Title color</label><input type="color" id="sb-phase-title-color" oninput="livePhase('titleColor',this.value)"/></div>
+      <div class="sb-row"><label>Title size</label><input type="range" min="14" max="36" id="sb-title-size" oninput="livePhase('titleSize',this.value)"/><span class="val" id="sb-title-size-val">22</span></div>
+      <div class="sb-row"><label>Focus label</label><input type="text" id="sb-focus" oninput="livePhase('focus',this.value)"/></div>
+      <div class="sb-row"><label>Focus color</label><input type="color" id="sb-focus-color" oninput="livePhase('focusColor',this.value)"/></div>
+      <div class="sb-row"><label>Icon (emoji)</label><input type="text" id="sb-icon" maxlength="2" oninput="livePhase('icon',this.value)"/></div>
+      <div class="sb-row"><label>Icon bg</label><input type="color" id="sb-icon-bg" oninput="livePhase('iconBg',this.value)"/></div>
+      <div class="sb-row"><label>Card bg</label><input type="color" id="sb-card-bg" oninput="livePhase('cardBg',this.value)"/></div>
+      <div class="sb-row"><label>Card width</label><input type="range" min="280" max="520" id="sb-card-w" oninput="livePhase('cardWidth',this.value)"/><span class="val" id="sb-card-w-val">360</span></div>
+      <div class="sb-row"><label>Border radius</label><input type="range" min="0" max="32" id="sb-card-r" oninput="livePhase('cardRadius',this.value)"/><span class="val" id="sb-card-r-val">20</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Shadow</div>
+      <div class="sb-row">
+        <button class="sb-chip" id="chip-none" onclick="livePhase('shadow','none');setChip('none')">None</button>
+        <button class="sb-chip active" id="chip-soft" onclick="livePhase('shadow','soft');setChip('soft')">Soft</button>
+        <button class="sb-chip" id="chip-hard" onclick="livePhase('shadow','hard');setChip('hard')">Hard</button>
+      </div>
+    </div>
+    <div class="sb-section">
+      <button class="add-btn" onclick="addFeatureToSelected()">+ Add feature block</button>
+    </div>
+  </div>
+  <div id="sidebar-feature" style="display:none;">
+    <div class="sb-section">
+      <div class="sb-title">Feature Block</div>
+      <div class="sb-row"><label>Icon (emoji)</label><input type="text" id="sb-fi" maxlength="2" oninput="liveFeature('icon',this.value)"/></div>
+      <div class="sb-row"><label>Title</label><input type="text" id="sb-ft" oninput="liveFeature('title',this.value)"/></div>
+      <div class="sb-row"><label>Title color</label><input type="color" id="sb-ft-color" oninput="liveFeature('titleColor',this.value)"/></div>
+      <div class="sb-row"><label>Title size</label><input type="range" min="11" max="22" id="sb-ft-size" oninput="liveFeature('titleSize',this.value)"/><span class="val" id="sb-ft-size-val">14</span></div>
+      <div class="sb-row">
+        <label>Bold</label>
+        <button class="icon-btn sb-chip" id="chip-bold" onclick="toggleFeatureBold()"><b>B</b></button>
+        <label>Italic</label>
+        <button class="icon-btn sb-chip" id="chip-italic" onclick="toggleFeatureItalic()"><i>I</i></button>
+      </div>
+      <div class="sb-row"><label>Left border color</label><input type="color" id="sb-fb-color" oninput="liveFeature('borderColor',this.value)"/></div>
+      <div class="sb-row"><label>Border width</label><input type="range" min="1" max="8" id="sb-fb-w" oninput="liveFeature('borderWidth',this.value)"/><span class="val" id="sb-fb-w-val">3</span></div>
+    </div>
+    <div class="sb-section">
+      <div class="sb-title">Bullet Items</div>
+      <div id="sb-items-list"></div>
+      <button class="add-btn" onclick="addBulletToSelected()">+ Add bullet item</button>
+    </div>
+    <div class="sb-section">
+      <button class="tb-btn danger" style="width:100%;justify-content:center;" onclick="deleteSelected()">🗑 Remove this feature</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CANVAS ══ -->
+<div class="canvas" id="canvas" onclick="clearSelection(event)"></div>
+
+<!-- ══ CONTEXT MENU ══ -->
+<div class="ctx-menu" id="ctxMenu">
+  <div class="ctx-item" onclick="ctxEditPhase()">✏️ Edit phase details</div>
+  <div class="ctx-item" onclick="ctxAddFeature()">➕ Add feature block</div>
+  <div class="ctx-item" onclick="ctxMoveLeft()">← Move left</div>
+  <div class="ctx-item" onclick="ctxMoveRight()">→ Move right</div>
+  <div class="ctx-item red" onclick="ctxDelete()">🗑 Delete phase</div>
+</div>
+
+<!-- ══ PHASE MODAL ══ -->
+<div class="modal-overlay" id="phaseModal">
+  <div class="modal">
+    <h2 id="modal-heading">Edit Phase</h2>
+    <label>Tag text (e.g. Q2–Q3: MAY – SEPTEMBER)</label>
+    <input type="text" id="m-tag"/>
+    <div class="modal-row">
+      <div><label>Tag bg color</label><input type="color" id="m-tag-bg"/></div>
+      <div><label>Tag text color</label><input type="color" id="m-tag-text"/></div>
+    </div>
+    <label>Phase title</label>
+    <input type="text" id="m-title"/>
+    <div class="modal-row">
+      <div><label>Title color</label><input type="color" id="m-title-color"/></div>
+      <div><label>Title font size</label><input type="number" id="m-title-size" min="12" max="40" value="22"/></div>
+    </div>
+    <label>Focus label (e.g. FOCUS: VERSION 7.0.0)</label>
+    <input type="text" id="m-focus"/>
+    <div class="modal-row">
+      <div><label>Focus dot color</label><input type="color" id="m-focus-color"/></div>
+      <div><label>Icon emoji</label><input type="text" id="m-icon" maxlength="2" style="font-size:20px;text-align:center;"/></div>
+    </div>
+    <div class="modal-row">
+      <div><label>Icon bg color</label><input type="color" id="m-icon-bg"/></div>
+      <div><label>Card bg color</label><input type="color" id="m-card-bg"/></div>
+    </div>
+    <div class="modal-btns">
+      <button class="save" onclick="savePhaseModal()">Save</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FEATURE MODAL ══ -->
+<div class="modal-overlay" id="featureModal">
+  <div class="modal">
+    <h2>Add Feature Block</h2>
+    <label>Icon emoji</label>
+    <input type="text" id="fm-icon" maxlength="2" style="font-size:20px;text-align:center;" value="📌"/>
+    <label>Feature title</label>
+    <input type="text" id="fm-title" value="New Feature"/>
+    <div class="modal-row">
+      <div><label>Title color</label><input type="color" id="fm-title-color" value="#222244"/></div>
+      <div><label>Left border color</label><input type="color" id="fm-border-color" value="#6c47ff"/></div>
+    </div>
+    <label>Bullet items (one per line)</label>
+    <textarea id="fm-items" placeholder="Item 1&#10;Item 2&#10;Item 3">Item 1&#10;Item 2</textarea>
+    <div class="modal-btns">
+      <button class="save" onclick="saveFeatureModal()">Add Feature</button>
+      <button onclick="document.getElementById('featureModal').classList.remove('open')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   DATA MODEL
+══════════════════════════════════════════ */
+var state={phases:[]};
+var selPhase=null; // index
+var selFeature=null; // {phaseIdx, featIdx}
+var ctxPhaseIdx=null;
+
+/* defaults */
+var PALETTE=[
+  {tagBg:'#eceaff',tagText:'#6c47ff',titleColor:'#6c47ff',focusColor:'#6c47ff',iconBg:'#eceaff'},
+  {tagBg:'#e8faf4',tagText:'#00a86b',titleColor:'#00a86b',focusColor:'#00a86b',iconBg:'#e8faf4'},
+  {tagBg:'#fff0f3',tagText:'#cc2244',titleColor:'#cc2244',focusColor:'#cc2244',iconBg:'#fff0f3'},
+  {tagBg:'#fff8e6',tagText:'#c87800',titleColor:'#c87800',focusColor:'#c87800',iconBg:'#fff8e6'},
+];
+
+function makePhaseDef(idx){
+  var p=PALETTE[idx%PALETTE.length];
+  return {
+    tag:'Q'+(idx*2+2)+'–Q'+(idx*2+3)+': PHASE '+(idx+1),
+    tagBg:p.tagBg, tagText:p.tagText,
+    title:'Phase '+(idx+1)+': Your Title Here',
+    titleColor:p.titleColor, titleSize:22,
+    focus:'FOCUS: VERSION '+(7+idx*0.5).toFixed(1),
+    focusColor:p.focusColor,
+    icon:['📊','🚀','🎯','💡'][idx%4],
+    iconBg:p.iconBg,
+    cardBg:'#ffffff', cardWidth:370, cardRadius:20,
+    shadow:'soft',
+    features:[]
+  };
+}
+
+function makeFeatureDef(icon,title,titleColor,borderColor,items){
+  return {
+    icon:icon||'📌', title:title||'Feature',
+    titleColor:titleColor||'#222244', titleSize:14, bold:true, italic:false,
+    borderColor:borderColor||'#6c47ff', borderWidth:3,
+    items:(items||['Detail 1','Detail 2']).map(function(t){return {text:t,icon:'◎'};})
+  };
+}
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+(function init(){
+  var p0=makePhaseDef(0);
+  p0.tag='Q2–Q3: MAY – SEPTEMBER'; p0.title='Phase 1: Experience & Core Evolution';
+  p0.focus='FOCUS: VERSION 7.0.0'; p0.icon='📊';
+  p0.features=[
+    makeFeatureDef('🏦','Finance Enhancements','#1a1a2e','#1a6040',['New Bank Reconciliation Module','Customer/Vendor Offset Management']),
+    makeFeatureDef('👥','HCMS Upgrades','#5500cc','#7c3aed',['Improved employee self-service','Enhanced re-hiring & System Audit Trail']),
+    makeFeatureDef('📱','Mobile Experience','#1a1a2e','#1a6040',['Redesigned salary slips & vacation dashboards']),
+  ];
+  var p1=makePhaseDef(1);
+  p1.tag='Q3–Q4: OCTOBER – DECEMBER'; p1.title='Phase 2: Intelligence & Innovation';
+  p1.focus='FOCUS: VERSION 7.5.0'; p1.icon='🚀';
+  p1.features=[
+    makeFeatureDef('🔨','New Bid Management','#5500cc','#7c3aed',['End-to-end tender management system','Automated bidding workflows']),
+    makeFeatureDef('📈','Strengthened BI','#1a1a2e','#1a6040',['Advanced interactive dashboards','Enhanced Query Builder tools']),
+    makeFeatureDef('🎨','System Customization','#cc0033','#ee2244',['Universal design engine (themes, fonts)']),
+  ];
+  state.phases=[p0,p1];
+  render();
+})();
+
+/* ══════════════════════════════════════════
+   RENDER
+══════════════════════════════════════════ */
+function render(){
+  var canvas=document.getElementById('canvas');
+  canvas.innerHTML='';
+  state.phases.forEach(function(ph,pi){
+    if(pi>0){
+      var conn=document.createElement('div');
+      conn.className='connector';
+      conn.innerHTML='<div class="connector-line"></div><div class="connector-dot"></div><div class="connector-line"></div>';
+      canvas.appendChild(conn);
+    }
+    var card=buildCard(ph,pi);
+    canvas.appendChild(card);
+  });
+}
+
+function buildCard(ph,pi){
+  var sel=(selPhase===pi && selFeature===null);
+  var card=document.createElement('div');
+  card.className='phase-card'+(sel?' selected':'');
+  card.style.background=ph.cardBg;
+  card.style.maxWidth=ph.cardWidth+'px';
+  card.style.minWidth=Math.min(ph.cardWidth,320)+'px';
+  card.style.borderRadius=ph.cardRadius+'px';
+  card.style.boxShadow=shadowVal(ph.shadow,sel);
+
+  card.addEventListener('click',function(e){e.stopPropagation();selectPhase(pi);});
+  card.addEventListener('contextmenu',function(e){e.preventDefault();openCtx(e,pi);});
+
+  /* tag */
+  var tag=document.createElement('div');
+  tag.className='phase-tag';
+  tag.style.background=ph.tagBg;
+  tag.style.color=ph.tagText;
+  tag.textContent=ph.tag;
+  card.appendChild(tag);
+
+  /* icon */
+  var ico=document.createElement('div');
+  ico.className='phase-icon';
+  ico.style.background=ph.iconBg;
+  ico.textContent=ph.icon;
+  card.appendChild(ico);
+
+  /* title */
+  var title=document.createElement('div');
+  title.className='phase-title';
+  title.style.color=ph.titleColor;
+  title.style.fontSize=ph.titleSize+'px';
+  title.textContent=ph.title;
+  card.appendChild(title);
+
+  /* focus */
+  var focus=document.createElement('div');
+  focus.className='focus-badge';
+  var dot=document.createElement('div');
+  dot.className='focus-dot';
+  dot.style.background=ph.focusColor;
+  var ftxt=document.createElement('span');
+  ftxt.style.color=ph.focusColor;
+  ftxt.textContent=ph.focus;
+  focus.appendChild(dot);focus.appendChild(ftxt);
+  card.appendChild(focus);
+
+  /* features */
+  ph.features.forEach(function(ft,fi){
+    var block=buildFeatureBlock(ft,pi,fi);
+    card.appendChild(block);
+  });
+
+  return card;
+}
+
+function buildFeatureBlock(ft,pi,fi){
+  var isSel=(selFeature&&selFeature.phaseIdx===pi&&selFeature.featIdx===fi);
+  var block=document.createElement('div');
+  block.className='feature-block'+(isSel?' selected-block':'');
+  block.style.borderLeftColor=ft.borderColor;
+  block.style.borderLeftWidth=ft.borderWidth+'px';
+
+  block.addEventListener('click',function(e){e.stopPropagation();selectFeature(pi,fi);});
+
+  var ftitle=document.createElement('div');
+  ftitle.className='feature-title';
+  ftitle.style.color=ft.titleColor;
+  ftitle.style.fontSize=ft.titleSize+'px';
+  ftitle.style.fontWeight=ft.bold?'700':'400';
+  ftitle.style.fontStyle=ft.italic?'italic':'normal';
+  ftitle.innerHTML='<span class="fi">'+ft.icon+'</span>'+escHtml(ft.title);
+  block.appendChild(ftitle);
+
+  ft.items.forEach(function(item){
+    var row=document.createElement('div');
+    row.className='feature-item';
+    row.innerHTML='<span class="fi">'+escHtml(item.icon||'◎')+'</span><span>'+escHtml(item.text)+'</span>';
+    block.appendChild(row);
+  });
+
+  return block;
+}
+
+function shadowVal(s,sel){
+  if(s==='none') return sel?'0 0 0 2.5px var(--accent)':'none';
+  if(s==='hard') return sel?'0 0 0 2.5px var(--accent),4px 4px 0 #ccc':'4px 4px 0 #cccccc';
+  return sel?'0 0 0 2.5px var(--accent),0 4px 24px rgba(0,0,0,.1)':'0 2px 16px rgba(0,0,0,.07)';
+}
+
+/* ══════════════════════════════════════════
+   SELECTION
+══════════════════════════════════════════ */
+function selectPhase(pi){
+  selPhase=pi; selFeature=null;
+  render();
+  loadSidebarPhase(pi);
+}
+
+function selectFeature(pi,fi){
+  selPhase=pi; selFeature={phaseIdx:pi,featIdx:fi};
+  render();
+  loadSidebarFeature(pi,fi);
+}
+
+function clearSelection(e){
+  if(!e.target.closest('.phase-card')&&!e.target.closest('.sidebar')&&!e.target.closest('.toolbar')){
+    selPhase=null; selFeature=null; render();
+    document.getElementById('sidebar-empty').style.display='';
+    document.getElementById('sidebar-phase').style.display='none';
+    document.getElementById('sidebar-feature').style.display='none';
+  }
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR — PHASE
+══════════════════════════════════════════ */
+function loadSidebarPhase(pi){
+  var ph=state.phases[pi];
+  document.getElementById('sidebar-empty').style.display='none';
+  document.getElementById('sidebar-feature').style.display='none';
+  document.getElementById('sidebar-phase').style.display='';
+  document.getElementById('sb-tag').value=ph.tag;
+  document.getElementById('sb-tag-color').value=toHex(ph.tagBg);
+  document.getElementById('sb-phase-title').value=ph.title;
+  document.getElementById('sb-phase-title-color').value=toHex(ph.titleColor);
+  document.getElementById('sb-title-size').value=ph.titleSize;
+  document.getElementById('sb-title-size-val').textContent=ph.titleSize;
+  document.getElementById('sb-focus').value=ph.focus;
+  document.getElementById('sb-focus-color').value=toHex(ph.focusColor);
+  document.getElementById('sb-icon').value=ph.icon;
+  document.getElementById('sb-icon-bg').value=toHex(ph.iconBg);
+  document.getElementById('sb-card-bg').value=toHex(ph.cardBg);
+  document.getElementById('sb-card-w').value=ph.cardWidth;
+  document.getElementById('sb-card-w-val').textContent=ph.cardWidth;
+  document.getElementById('sb-card-r').value=ph.cardRadius;
+  document.getElementById('sb-card-r-val').textContent=ph.cardRadius;
+  setChip(ph.shadow||'soft');
+}
+
+function livePhase(prop,val){
+  if(selPhase===null) return;
+  var ph=state.phases[selPhase];
+  if(prop==='tag') ph.tag=val;
+  else if(prop==='tagColor') ph.tagBg=val;
+  else if(prop==='title') ph.title=val;
+  else if(prop==='titleColor') ph.titleColor=val;
+  else if(prop==='titleSize'){ph.titleSize=+val;document.getElementById('sb-title-size-val').textContent=val;}
+  else if(prop==='focus') ph.focus=val;
+  else if(prop==='focusColor') ph.focusColor=val;
+  else if(prop==='icon') ph.icon=val;
+  else if(prop==='iconBg') ph.iconBg=val;
+  else if(prop==='cardBg') ph.cardBg=val;
+  else if(prop==='cardWidth'){ph.cardWidth=+val;document.getElementById('sb-card-w-val').textContent=val;}
+  else if(prop==='cardRadius'){ph.cardRadius=+val;document.getElementById('sb-card-r-val').textContent=val;}
+  else if(prop==='shadow') ph.shadow=val;
+  render();
+}
+
+function setChip(s){
+  ['none','soft','hard'].forEach(function(k){
+    document.getElementById('chip-'+k).classList.toggle('active',k===s);
+  });
+}
+
+/* ══════════════════════════════════════════
+   SIDEBAR — FEATURE
+══════════════════════════════════════════ */
+function loadSidebarFeature(pi,fi){
+  var ft=state.phases[pi].features[fi];
+  document.getElementById('sidebar-empty').style.display='none';
+  document.getElementById('sidebar-phase').style.display='none';
+  document.getElementById('sidebar-feature').style.display='';
+  document.getElementById('sb-fi').value=ft.icon;
+  document.getElementById('sb-ft').value=ft.title;
+  document.getElementById('sb-ft-color').value=toHex(ft.titleColor);
+  document.getElementById('sb-ft-size').value=ft.titleSize;
+  document.getElementById('sb-ft-size-val').textContent=ft.titleSize;
+  document.getElementById('chip-bold').classList.toggle('active',ft.bold);
+  document.getElementById('chip-italic').classList.toggle('active',ft.italic);
+  document.getElementById('sb-fb-color').value=toHex(ft.borderColor);
+  document.getElementById('sb-fb-w').value=ft.borderWidth;
+  document.getElementById('sb-fb-w-val').textContent=ft.borderWidth;
+  renderBulletList(pi,fi);
+}
+
+function renderBulletList(pi,fi){
+  var ft=state.phases[pi].features[fi];
+  var list=document.getElementById('sb-items-list');
+  list.innerHTML='';
+  ft.items.forEach(function(item,ii){
+    var row=document.createElement('div');
+    row.className='sb-row';
+    row.style.alignItems='center';
+    var iconIn=document.createElement('input');
+    iconIn.type='text'; iconIn.maxLength=2; iconIn.value=item.icon||'◎';
+    iconIn.style.width='36px'; iconIn.style.textAlign='center'; iconIn.style.fontSize='14px';
+    iconIn.oninput=function(){item.icon=this.value;render();};
+    var txtIn=document.createElement('input');
+    txtIn.type='text'; txtIn.value=item.text; txtIn.style.flex='1';
+    txtIn.oninput=function(){item.text=this.value;render();};
+    var del=document.createElement('button');
+    del.className='icon-btn'; del.textContent='✕'; del.title='Remove';
+    del.onclick=function(){ft.items.splice(ii,1);loadSidebarFeature(pi,fi);render();};
+    row.appendChild(iconIn); row.appendChild(txtIn); row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+function liveFeature(prop,val){
+  if(!selFeature) return;
+  var ft=state.phases[selFeature.phaseIdx].features[selFeature.featIdx];
+  if(prop==='icon') ft.icon=val;
+  else if(prop==='title') ft.title=val;
+  else if(prop==='titleColor') ft.titleColor=val;
+  else if(prop==='titleSize'){ft.titleSize=+val;document.getElementById('sb-ft-size-val').textContent=val;}
+  else if(prop==='borderColor') ft.borderColor=val;
+  else if(prop==='borderWidth'){ft.borderWidth=+val;document.getElementById('sb-fb-w-val').textContent=val;}
+  render();
+}
+
+function toggleFeatureBold(){
+  if(!selFeature) return;
+  var ft=state.phases[selFeature.phaseIdx].features[selFeature.featIdx];
+  ft.bold=!ft.bold;
+  document.getElementById('chip-bold').classList.toggle('active',ft.bold);
+  render();
+}
+function toggleFeatureItalic(){
+  if(!selFeature) return;
+  var ft=state.phases[selFeature.phaseIdx].features[selFeature.featIdx];
+  ft.italic=!ft.italic;
+  document.getElementById('chip-italic').classList.toggle('active',ft.italic);
+  render();
+}
+
+function addBulletToSelected(){
+  if(!selFeature) return;
+  var ft=state.phases[selFeature.phaseIdx].features[selFeature.featIdx];
+  ft.items.push({icon:'◎',text:'New item'});
+  renderBulletList(selFeature.phaseIdx,selFeature.featIdx);
+  render();
+}
+
+/* ══════════════════════════════════════════
+   PHASE ACTIONS
+══════════════════════════════════════════ */
+function addPhase(){
+  state.phases.push(makePhaseDef(state.phases.length));
+  render();
+  selectPhase(state.phases.length-1);
+}
+
+function moveSelected(dir){
+  if(selPhase===null) return;
+  var pi=selPhase, arr=state.phases;
+  var ni=pi+dir;
+  if(ni<0||ni>=arr.length) return;
+  var tmp=arr[pi]; arr[pi]=arr[ni]; arr[ni]=tmp;
+  selPhase=ni; render();
+  loadSidebarPhase(ni);
+}
+
+function deleteSelected(){
+  if(selFeature){
+    var ft=state.phases[selFeature.phaseIdx].features;
+    ft.splice(selFeature.featIdx,1);
+    selFeature=null;
+    render(); loadSidebarPhase(selPhase);
+  } else if(selPhase!==null){
+    state.phases.splice(selPhase,1);
+    selPhase=null; selFeature=null;
+    render();
+    document.getElementById('sidebar-empty').style.display='';
+    document.getElementById('sidebar-phase').style.display='none';
+  }
+}
+
+/* ══════════════════════════════════════════
+   FEATURE MODAL
+══════════════════════════════════════════ */
+function addFeatureToSelected(){
+  if(selPhase===null) return;
+  document.getElementById('featureModal').classList.add('open');
+}
+
+function saveFeatureModal(){
+  if(selPhase===null) return;
+  var items=document.getElementById('fm-items').value.split('\n').filter(function(t){return t.trim();}).map(function(t){return {icon:'◎',text:t.trim()};});
+  var ft=makeFeatureDef(
+    document.getElementById('fm-icon').value,
+    document.getElementById('fm-title').value,
+    document.getElementById('fm-title-color').value,
+    document.getElementById('fm-border-color').value,
+    null
+  );
+  ft.items=items;
+  state.phases[selPhase].features.push(ft);
+  document.getElementById('featureModal').classList.remove('open');
+  render(); loadSidebarPhase(selPhase);
+}
+
+/* ══════════════════════════════════════════
+   PHASE MODAL
+══════════════════════════════════════════ */
+function openPhaseModal(){
+  if(selPhase===null){alert('Select a phase card first.');return;}
+  var ph=state.phases[selPhase];
+  document.getElementById('m-tag').value=ph.tag;
+  document.getElementById('m-tag-bg').value=toHex(ph.tagBg);
+  document.getElementById('m-tag-text').value=toHex(ph.tagText);
+  document.getElementById('m-title').value=ph.title;
+  document.getElementById('m-title-color').value=toHex(ph.titleColor);
+  document.getElementById('m-title-size').value=ph.titleSize;
+  document.getElementById('m-focus').value=ph.focus;
+  document.getElementById('m-focus-color').value=toHex(ph.focusColor);
+  document.getElementById('m-icon').value=ph.icon;
+  document.getElementById('m-icon-bg').value=toHex(ph.iconBg);
+  document.getElementById('m-card-bg').value=toHex(ph.cardBg);
+  document.getElementById('modal-heading').textContent='Edit Phase '+(selPhase+1);
+  document.getElementById('phaseModal').classList.add('open');
+}
+
+function savePhaseModal(){
+  if(selPhase===null) return;
+  var ph=state.phases[selPhase];
+  ph.tag=document.getElementById('m-tag').value;
+  ph.tagBg=document.getElementById('m-tag-bg').value;
+  ph.tagText=document.getElementById('m-tag-text').value;
+  ph.title=document.getElementById('m-title').value;
+  ph.titleColor=document.getElementById('m-title-color').value;
+  ph.titleSize=+document.getElementById('m-title-size').value;
+  ph.focus=document.getElementById('m-focus').value;
+  ph.focusColor=document.getElementById('m-focus-color').value;
+  ph.icon=document.getElementById('m-icon').value;
+  ph.iconBg=document.getElementById('m-icon-bg').value;
+  ph.cardBg=document.getElementById('m-card-bg').value;
+  closeModal(); render(); loadSidebarPhase(selPhase);
+}
+
+function closeModal(){
+  document.getElementById('phaseModal').classList.remove('open');
+}
+
+/* ══════════════════════════════════════════
+   CONTEXT MENU
+══════════════════════════════════════════ */
+function openCtx(e,pi){
+  ctxPhaseIdx=pi;
+  var m=document.getElementById('ctxMenu');
+  m.style.left=Math.min(e.clientX,window.innerWidth-190)+'px';
+  m.style.top=Math.min(e.clientY,window.innerHeight-200)+'px';
+  m.classList.add('open');
+  selectPhase(pi);
+}
+function closeCtx(){document.getElementById('ctxMenu').classList.remove('open');}
+function ctxEditPhase(){closeCtx();openPhaseModal();}
+function ctxAddFeature(){closeCtx();addFeatureToSelected();}
+function ctxMoveLeft(){closeCtx();moveSelected(-1);}
+function ctxMoveRight(){closeCtx();moveSelected(1);}
+function ctxDelete(){closeCtx();var tmp=selPhase;selPhase=ctxPhaseIdx;selFeature=null;deleteSelected();}
+document.addEventListener('click',function(e){if(!e.target.closest('#ctxMenu'))closeCtx();});
+
+/* ══════════════════════════════════════════
+   EXPORT / IMPORT
+══════════════════════════════════════════ */
+function exportHTML(){
+  var styles=document.querySelector('style').outerHTML;
+  var link='<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet"/>';
+  var body=document.getElementById('canvas').outerHTML;
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'+link+styles+'<style>.canvas{padding:40px;display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start;background:#f0f0f8;min-height:100vh;} .phase-card{cursor:default;} .feature-block{cursor:default;}</style></head><body class="canvas">'+document.getElementById('canvas').innerHTML+'</body></html>';
+  download('roadmap_export.html',html,'text/html');
+}
+
+function exportJSON(){
+  download('roadmap_data.json',JSON.stringify(state,null,2),'application/json');
+}
+
+function importJSON(){document.getElementById('import-file').click();}
+function doImport(inp){
+  var f=inp.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(e){
+    try{state=JSON.parse(e.target.result);selPhase=null;selFeature=null;render();
+      document.getElementById('sidebar-empty').style.display='';
+      document.getElementById('sidebar-phase').style.display='none';
+      document.getElementById('sidebar-feature').style.display='none';
+    }catch(err){alert('Invalid JSON file');}
+  };
+  r.readAsText(f);
+  inp.value='';
+}
+
+function download(name,content,type){
+  var b=new Blob([content],{type:type});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(b); a.download=name; a.click();
+}
+
+/* ══════════════════════════════════════════
+   UTILS
+══════════════════════════════════════════ */
+function escHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function toHex(c){
+  if(!c) return '#ffffff';
+  if(c[0]==='#') return c.length===4?'#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3]:c;
+  var d=document.createElement('div');d.style.color=c;document.body.appendChild(d);
+  var cs=getComputedStyle(d).color; document.body.removeChild(d);
+  var m=cs.match(/\d+/g); if(!m) return '#ffffff';
+  return '#'+m.slice(0,3).map(function(x){return ('0'+parseInt(x).toString(16)).slice(-2);}).join('');
+}
+
+/* close modals on overlay click */
+document.getElementById('phaseModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('featureModal').addEventListener('click',function(e){if(e.target===this)e.target.classList.remove('open');});
+</script>
+</body>
+</html>
